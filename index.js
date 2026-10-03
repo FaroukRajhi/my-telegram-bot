@@ -10,20 +10,23 @@ app.use(
 	})
 ) // for parsing application/x-www-form-urlencoded
 
-//This is the route the API will call
-app.post("/new-message", function(req, res) {
-	const { message } = req.body
+// This is the route the API will call
+app.post("/new-message", function (req, res) {
+	// ✅ FIX 1: Destructure `message` FROM req.body (not from req.body.message.text)
+	// ✅ FIX 2: Guard against missing body so .toLowerCase() never crashes
+	const message = req.body && req.body.message;
 
-	//Each message contains "text" and a "chat" object, which has an "id" which is the chat id
-
-	if (!message || message.text.toLowerCase().indexOf("marco") < 0) {
-		// In case a message is not present, or if our message does not have the word marco in it, do nothing and return an empty response
+	if (!message || !message.text) {
 		return res.end()
 	}
 
-	// If we've gotten this far, it means that we have received a message containing the word "marco".
-	// Respond by hitting the telegram bot API and responding to the appropriate chat_id with the word "Polo!!"
-	// Remember to use your own API toked instead of the one below  "https://api.telegram.org/bot<your_api_token>/sendMessage"
+	// ✅ FIX 3: `message` is already an object; use message.text directly
+	if (message.text.toLowerCase().indexOf("farouk") < 0) {
+		// No "marco" in the message — do nothing
+		return res.end()
+	}
+
+	// Respond with "Polo!!" to the same chat
 	axios
 		.post(
 			"https://api.telegram.org/bot777845702:AAFdPS_taJ3pTecEFv2jXkmbQfeOqVZGER/sendMessage",
@@ -33,18 +36,16 @@ app.post("/new-message", function(req, res) {
 			}
 		)
 		.then((response) => {
-			// We get here if the message was successfully posted
 			console.log("Message posted")
 			res.end("ok")
 		})
 		.catch((err) => {
-			// ...and here if it was not
-			console.log("Error :", err)
-			res.end("Error :" + err)
+			console.log("Error :", err.message)
+			res.end("Error :" + err.message)
 		})
 })
 
-// Finally, start our server
-app.listen(3000, function() {
+// Start our server
+app.listen(3000, function () {
 	console.log("Telegram app listening on port 3000!")
 })
